@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Console """
+"""The console """
 
 import cmd
 from datetime import datetime
@@ -11,7 +11,7 @@ from models.place import Place
 from models.review import Review
 from models.state import State
 from models.user import User
-import shlex  # for splitting the line along spaces except in double quotes
+import shlex # for splitting the line along spaces except in double quotes
 
 classes = {"Amenity": Amenity, "BaseModel": BaseModel, "City": City,
            "Place": Place, "Review": Review, "State": State, "User": User}
@@ -44,28 +44,39 @@ class HBNBCommand(cmd.Cmd):
                 if value[0] == value[-1] == '"':
                     value = shlex.split(value)[0].replace('_', ' ')
                 else:
-                    try:
-                        value = int(value)
-                    except:
-                        try:
-                            value = float(value)
-                        except:
-                            continue
+                    value = self._convert_value(value)
                 new_dict[key] = value
         return new_dict
 
+    def _convert_value(self, value):
+        """Converts value to int or float if possible, otherwise returns the original value."""
+        try:
+            return int(value)
+        except ValueError:
+            try:
+                return float(value)
+            except ValueError:
+                return value
+
+    def _validate_class_and_instance(self, class_name, instance_id):
+        """Validates class name and instance id, returns instance if valid."""
+        if class_name not in classes:
+            print("** class doesn't exist **")
+            return None
+        key = f"{class_name}.{instance_id}"
+        if key not in models.storage.all():
+            print("** no instance found **")
+            return None
+        return models.storage.all()[key]
+
     def do_create(self, arg):
         """Creates a new instance of a class"""
-        args = arg.split()
+        args = shlex.split(arg)
         if len(args) == 0:
             print("** class name missing **")
             return False
-        if args[0] in classes:
-            new_dict = self._key_value_parser(args[1:])
-            instance = classes[args[0]](**new_dict)
-        else:
-            print("** class doesn't exist **")
-            return False
+        new_dict = self._key_value_parser(args[1:])
+        instance = classes[args[0]](**new_dict)
         print(instance.id)
         instance.save()
 
@@ -75,40 +86,24 @@ class HBNBCommand(cmd.Cmd):
         if len(args) == 0:
             print("** class name missing **")
             return False
-        if args[0] in classes:
-            if len(args) > 1:
-                key = args[0] + "." + args[1]
-                if key in models.storage.all():
-                    print(models.storage.all()[key])
-                else:
-                    print("** no instance found **")
-            else:
-                print("** instance id missing **")
-        else:
-            print("** class doesn't exist **")
+        instance = self._validate_class_and_instance(args[0], args[1])
+        if instance:
+            print(instance)
 
     def do_destroy(self, arg):
         """Deletes an instance based on the class and id"""
         args = shlex.split(arg)
         if len(args) == 0:
             print("** class name missing **")
-        elif args[0] in classes:
-            if len(args) > 1:
-                key = args[0] + "." + args[1]
-                if key in models.storage.all():
-                    models.storage.all().pop(key)
-                    models.storage.save()
-                else:
-                    print("** no instance found **")
-            else:
-                print("** instance id missing **")
-        else:
-            print("** class doesn't exist **")
+            return False
+        instance = self._validate_class_and_instance(args[0], args[1])
+        if instance:
+            models.storage.all().pop(instance.key)
+            models.storage.save()
 
     def do_all(self, arg):
         """Prints string representations of instances"""
         args = shlex.split(arg)
-        obj_list = []
         if len(args) == 0:
             obj_dict = models.storage.all()
         elif args[0] in classes:
@@ -116,49 +111,25 @@ class HBNBCommand(cmd.Cmd):
         else:
             print("** class doesn't exist **")
             return False
-        for key in obj_dict:
-            obj_list.append(str(obj_dict[key]))
         print("[", end="")
-        print(", ".join(obj_list), end="")
+        print(", ".join(str(obj) for obj in obj_dict.values()), end="")
         print("]")
 
     def do_update(self, arg):
         """Update an instance based on the class name, id, attribute & value"""
         args = shlex.split(arg)
-        integers = ["number_rooms", "number_bathrooms", "max_guest",
-                    "price_by_night"]
-        floats = ["latitude", "longitude"]
         if len(args) == 0:
             print("** class name missing **")
-        elif args[0] in classes:
-            if len(args) > 1:
-                k = args[0] + "." + args[1]
-                if k in models.storage.all():
-                    if len(args) > 2:
-                        if len(args) > 3:
-                            if args[0] == "Place":
-                                if args[2] in integers:
-                                    try:
-                                        args[3] = int(args[3])
-                                    except:
-                                        args[3] = 0
-                                elif args[2] in floats:
-                                    try:
-                                        args[3] = float(args[3])
-                                    except:
-                                        args[3] = 0.0
-                            setattr(models.storage.all()[k], args[2], args[3])
-                            models.storage.all()[k].save()
-                        else:
-                            print("** value missing **")
-                    else:
-                        print("** attribute name missing **")
-                else:
-                    print("** no instance found **")
-            else:
-                print("** instance id missing **")
+            return False
+        instance = self._validate_class_and_instance(args[0], args[1])
+        if instance and len(args) > 2:
+            attr_name = args[2]
+            new_value = self._convert_value(args[3])
+            setattr(instance, attr_name, new_value)
+            instance.save()
         else:
-            print("** class doesn't exist **")
+            print("** attribute name or value missing **")
 
 if __name__ == '__main__':
     HBNBCommand().cmdloop()
+
