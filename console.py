@@ -1,4 +1,5 @@
-ole """
+#!/usr/bin/python3
+"""My console """
 
 import cmd
 from datetime import datetime
@@ -10,11 +11,10 @@ from models.place import Place
 from models.review import Review
 from models.state import State
 from models.user import User
-import shlex # for splitting the line along spaces except in double quotes
+import shlex 
 
-# Maintaining the original structure of the classes dictionary
-classes = {"Amenity": Amenity, "BaseModel": BaseModel, "City": City,
-           "Place": Place, "Review": Review, "State": State, "User": User}
+model_classes = {"Amenity": Amenity, "BaseModel": BaseModel, "City": City,
+                 "Place": Place, "Review": Review, "State": State, "User": User}
 
 
 class HBNBCommand(cmd.Cmd):
@@ -33,14 +33,14 @@ class HBNBCommand(cmd.Cmd):
         """Quit command to exit the program"""
         return True
 
-    def _key_value_parser(self, args):
+    def parse_key_value_pairs(self, args):
         """creates a dictionary from a list of strings"""
-        new_dict = {}
+        key_value_dict = {}
         for arg in args:
             if "=" in arg:
-                kvp = arg.split('=', 1)
-                key = kvp[0]
-                value = kvp[1]
+                key_value_pair = arg.split('=', 1)
+                key = key_value_pair[0]
+                value = key_value_pair[1]
                 if value[0] == value[-1] == '"':
                     value = shlex.split(value)[0].replace('_', ' ')
                 else:
@@ -51,18 +51,18 @@ class HBNBCommand(cmd.Cmd):
                             value = float(value)
                         except:
                             continue
-                new_dict[key] = value
-        return new_dict
+                key_value_dict[key] = value
+        return key_value_dict
 
     def do_create(self, arg):
         """Creates a new instance of a class"""
-        args = arg.split()
-        if len(args) == 0:
+        arguments = arg.split()
+        if len(arguments) == 0:
             print("** class name missing **")
             return False
-        if args[0] in classes:
-            new_dict = self._key_value_parser(args[1:])
-            instance = classes[args[0]](**new_dict)
+        if arguments[0] in model_classes:
+            new_dict = self.parse_key_value_pairs(arguments[1:])
+            instance = model_classes[arguments[0]](**new_dict)
         else:
             print("** class doesn't exist **")
             return False
@@ -71,13 +71,13 @@ class HBNBCommand(cmd.Cmd):
 
     def do_show(self, arg):
         """Prints an instance as a string based on the class and id"""
-        args = shlex.split(arg)
-        if len(args) == 0:
+        arguments = shlex.split(arg)
+        if len(arguments) == 0:
             print("** class name missing **")
             return False
-        if args[0] in classes:
-            if len(args) > 1:
-                key = args[0] + "." + args[1]
+        if arguments[0] in model_classes:
+            if len(arguments) > 1:
+                key = arguments[0] + "." + arguments[1]
                 if key in models.storage.all():
                     print(models.storage.all()[key])
                 else:
@@ -89,12 +89,12 @@ class HBNBCommand(cmd.Cmd):
 
     def do_destroy(self, arg):
         """Deletes an instance based on the class and id"""
-        args = shlex.split(arg)
-        if len(args) == 0:
+        arguments = shlex.split(arg)
+        if len(arguments) == 0:
             print("** class name missing **")
-        elif args[0] in classes:
-            if len(args) > 1:
-                key = args[0] + "." + args[1]
+        elif arguments[0] in model_classes:
+            if len(arguments) > 1:
+                key = arguments[0] + "." + arguments[1]
                 if key in models.storage.all():
                     models.storage.all().pop(key)
                     models.storage.save()
@@ -107,48 +107,48 @@ class HBNBCommand(cmd.Cmd):
 
     def do_all(self, arg):
         """Prints string representations of instances"""
-        args = shlex.split(arg)
-        obj_list = []
-        if len(args) == 0:
-            obj_dict = models.storage.all()
-        elif args[0] in classes:
-            obj_dict = models.storage.all(classes[args[0]])
+        arguments = shlex.split(arg)
+        object_list = []
+        if len(arguments) == 0:
+            object_dict = models.storage.all()
+        elif arguments[0] in model_classes:
+            object_dict = models.storage.all(model_classes[arguments[0]])
         else:
             print("** class doesn't exist **")
             return False
-        for key in obj_dict:
-            obj_list.append(str(obj_dict[key]))
+        for key in object_dict:
+            object_list.append(str(object_dict[key]))
         print("[", end="")
-        print(", ".join(obj_list), end="")
+        print(", ".join(object_list), end="")
         print("]")
 
     def do_update(self, arg):
         """Update an instance based on the class name, id, attribute & value"""
-        args = shlex.split(arg)
-        integers = ["number_rooms", "number_bathrooms", "max_guest",
-                    "price_by_night"]
-        floats = ["latitude", "longitude"]
-        if len(args) == 0:
+        arguments = shlex.split(arg)
+        integer_attributes = ["number_rooms", "number_bathrooms", "max_guest",
+                              "price_by_night"]
+        float_attributes = ["latitude", "longitude"]
+        if len(arguments) == 0:
             print("** class name missing **")
-        elif args[0] in classes:
-            if len(args) > 1:
-                k = args[0] + "." + args[1]
-                if k in models.storage.all():
-                    if len(args) > 2:
-                        if len(args) > 3:
-                            if args[0] == "Place":
-                                if args[2] in integers:
+        elif arguments[0] in model_classes:
+            if len(arguments) > 1:
+                key = arguments[0] + "." + arguments[1]
+                if key in models.storage.all():
+                    if len(arguments) > 2:
+                        if len(arguments) > 3:
+                            if arguments[0] == "Place":
+                                if arguments[2] in integer_attributes:
                                     try:
-                                        args[3] = int(args[3])
+                                        arguments[3] = int(arguments[3])
                                     except:
-                                        args[3] = 0
-                                elif args[2] in floats:
+                                        arguments[3] = 0
+                                elif arguments[2] in float_attributes:
                                     try:
-                                        args[3] = float(args[3])
+                                        arguments[3] = float(arguments[3])
                                     except:
-                                        args[3] = 0.0
-                            setattr(models.storage.all()[k], args[2], args[3])
-                            models.storage.all()[k].save()
+                                        arguments[3] = 0.0
+                            setattr(models.storage.all()[key], arguments[2], arguments[3])
+                            models.storage.all()[key].save()
                         else:
                             print("** value missing **")
                     else:
