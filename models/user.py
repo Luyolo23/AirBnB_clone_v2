@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""holds class User"""
+"""Contains User class"""
 import models
 from models.base_model import BaseModel, Base
 from os import getenv
@@ -25,5 +25,5 @@ class User(BaseModel, Base):
         last_name = ""
 
     def __init__(self, *args, **kwargs):
-        """initializes user"""
+        """This initializes user"""
         super().__init__(*args, **kwargs)
