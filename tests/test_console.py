@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""ontains the class TestConsoleDocs
+"""contains the class TestConsoleDocs
 """
 import console
 import inspect
