@@ -1,60 +1,53 @@
 #!/usr/bin/python3
+""" 5. Add fifth view func that displays HTML page if n is int """
 
-""" Module that includes script that starts a Flask web application.
-Web application must be listening on 0.0.0.0, port 5000
-Routes:
-    - /: display “Hello HBNB!”
-    - /hbnb: display “HBNB”
-    - /c/<text>: display “C ” followed by the value of the text variable
-        (replace underscore _ symbols with a space )
-    - `/python/<text>`: display “Python ”, followed by the value of the text
-        variable (replace underscore _ symbols with a space )
-    - /number/<n>: display “`n` is a number” only if `n` is an integer
-    - /number_template/<n>: display a HTML page only if n is an integer:
-        - H1 tag: “Number: n” inside the tag BODY
-must use the option strict_slashes=False in your route definition
-"""
+from flask import Flask
+from flask import render_template
 
-from flask import Flask, render_template
 
 app = Flask(__name__)
+app.url_map.strict_slashes = False
 
 
-@app.route('/', strict_slashes=False)
-def hello_hbnb():
-    """Function called through the / route."""
+@app.route('/')
+def hello_world():
+    """ Returns some text. """
     return 'Hello HBNB!'
 
 
-@app.route('/hbnb', strict_slashes=False)
-def hbnb():
-    """Function called through the /hbnb route."""
+@app.route('/hbnb')
+def hello():
+    """ Return other text. """
     return 'HBNB'
 
 
-@app.route('/c/<text>', strict_slashes=False)
-def c_route(text):
-    """Function called through the /c/<text> route."""
-    return 'C ' + text.replace('_', ' ')
+@app.route('/c/<text>')
+def c_text(text):
+    """ replace text with variable. """
+    text = text.replace('_', ' ')
+    return 'C {}'.format(text)
 
 
-@app.route('/python', defaults={'text': 'is cool'}, strict_slashes=False)
-@app.route('/python/<text>', strict_slashes=False)
-def python_route(text):
-    """Function called through the /python/<text> route."""
-    return 'Python {}'.format(text.replace('_', ' '))
+@app.route('/python/')
+@app.route('/python/<text>')
+def python_text(text='is cool'):
+    """ replace more text with another variable. """
+    text = text.replace('_', ' ')
+    return 'Python {}'.format(text)
 
 
-@app.route('/number/<int:n>', strict_slashes=False)
-def number_route(n):
-    """Function that displays "n is a number" if n is indeed an integer."""
-    return '{:d} is a number'.format(n)
+@app.route('/number/<int:n>')
+def number_text(n):
+    """ replace with int only if given int. """
+    n = str(n)
+    return '{} is a number'.format(n)
 
 
-@app.route('/number_template/<int:n>', strict_slashes=False)
-def number_template(n):
-    """Function to display an HTML page only if n is an integer"""
-    return render_template('5-number_template.html', n=n)
+@app.route('/number_template/<int:n>')
+def html_num(n):
+    """ display html if n is int. """
+    n = str(n)
+    return render_template('5-number.html', n=n)
 
 
 if __name__ == '__main__':
